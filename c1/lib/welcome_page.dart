@@ -1,7 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  late final VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _showStaticState = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset('assets/videos/animka.mp4')
+      ..setLooping(false)
+      ..setVolume(0);
+    _controller.addListener(_handleVideoState);
+    _initializeVideo();
+  }
+
+  void _handleVideoState() {
+    if (!_isInitialized || _showStaticState) {
+      return;
+    }
+    if (_controller.value.isCompleted) {
+      setState(() {
+        _showStaticState = true;
+      });
+    }
+  }
+
+  Future<void> _initializeVideo() async {
+    await _controller.initialize();
+    if (!mounted) {
+      return;
+    }
+    await _controller.play();
+    setState(() {
+      _isInitialized = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_handleVideoState);
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,121 +58,205 @@ class WelcomePage extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: Image.asset(
-                  'assets/images/123.jpg',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                ),
-              ),
-              Expanded(
-                child: Image.asset(
-                  'assets/images/FrenchSnail.jpg',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                ),
-              ),
-            ],
+          AnimatedOpacity(
+            opacity: _showStaticState ? 0 : 1,
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeInOut,
+            child: _isInitialized
+                ? FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
+                    ),
+                  )
+                : const ColoredBox(color: Colors.black),
           ),
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x22000000),
-                  Color(0x33000000),
-                  Color(0x55000000),
-                ],
-              ),
-            ),
-          ),
-          Center(
-            child: Container(
-              width: 300,
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.46),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/images/logo.png',
-                    width: 105,
-                    height: 105,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Join us\nright now',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 47,
-                      fontWeight: FontWeight.w400,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF3C406),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      child: const Text('Login'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'or',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFFD48429),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      child: const Text('Register'),
-                    ),
-                  ),
-                ],
-              ),
+          AnimatedOpacity(
+            opacity: _showStaticState ? 1 : 0,
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeInOut,
+            child: IgnorePointer(
+              ignoring: !_showStaticState,
+              child: const _WelcomeStaticView(),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+class _WelcomeStaticView extends StatelessWidget {
+  const _WelcomeStaticView();
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Transform.rotate(
+          angle: -0.06,
+          child: Transform.scale(
+            scale: 1.09,
+            child: Image.asset(
+              'assets/images/123.jpg',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+            ),
+          ),
+        ),
+        Transform.translate(
+          offset: Offset(-size.width * 0.08, size.height * 0.03),
+          child: Transform.rotate(
+            angle: -0.06,
+            child: Transform.scale(
+              scale: 1.22,
+              child: ClipPath(
+                clipper: _BottomLeftSliceClipper(),
+                child: Image.asset(
+                  'assets/images/FrenchSnail.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0x19000000),
+                Color(0x3D000000),
+                Color(0x63000000),
+              ],
+            ),
+          ),
+        ),
+        Center(
+          child: Container(
+            width: 300,
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.46),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 105,
+                  height: 105,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Join us\nright now',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 55,
+                    fontWeight: FontWeight.w300,
+                    height: 0.96,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF3C406),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    child: const Text('Login'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: Colors.white.withValues(alpha: 0.42),
+                        thickness: 1.2,
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'or',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: Colors.white.withValues(alpha: 0.42),
+                        thickness: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFD48429),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    child: const Text('Register'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BottomLeftSliceClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..moveTo(0, size.height * 0.49)
+      ..lineTo(size.width, size.height * 0.81)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
