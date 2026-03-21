@@ -178,8 +178,8 @@ class _WelcomeStaticView extends StatelessWidget {
                         'or',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 34,
-                          fontWeight: FontWeight.w300,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w200,
                         ),
                       ),
                     ),
