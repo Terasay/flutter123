@@ -93,38 +93,13 @@ class _WelcomeStaticView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-
     return Stack(
       fit: StackFit.expand,
       children: [
-        Transform.rotate(
-          angle: -0.06,
-          child: Transform.scale(
-            scale: 1.09,
-            child: Image.asset(
-              'assets/images/123.jpg',
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: Offset(-size.width * 0.08, size.height * 0.03),
-          child: Transform.rotate(
-            angle: -0.06,
-            child: Transform.scale(
-              scale: 1.22,
-              child: ClipPath(
-                clipper: _BottomLeftSliceClipper(),
-                child: Image.asset(
-                  'assets/images/FrenchSnail.jpg',
-                  fit: BoxFit.cover,
-                  alignment: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ),
+        Image.asset(
+          'assets/images/awrar.jpg',
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
         ),
         Container(
           decoration: const BoxDecoration(
@@ -243,20 +218,4 @@ class _WelcomeStaticView extends StatelessWidget {
       ],
     );
   }
-}
-
-class _BottomLeftSliceClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path()
-      ..moveTo(0, size.height * 0.49)
-      ..lineTo(size.width, size.height * 0.81)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
