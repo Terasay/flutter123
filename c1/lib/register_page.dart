@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'auth/local_auth_db.dart';
 import 'home_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _accountController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _repeatPasswordController =
+      TextEditingController();
 
   bool _isPolicyAccepted = false;
   bool _isSubmitting = false;
@@ -21,19 +23,25 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _accountController.dispose();
     _passwordController.dispose();
+    _repeatPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _register() async {
     if (_isSubmitting) {
       return;
     }
 
     final account = _accountController.text.trim();
     final password = _passwordController.text.trim();
+    final repeatPassword = _repeatPasswordController.text.trim();
 
-    if (account.isEmpty || password.isEmpty) {
-      _showMessage('Please enter your account and password');
+    if (account.isEmpty || password.isEmpty || repeatPassword.isEmpty) {
+      _showMessage('Please fill all fields');
+      return;
+    }
+    if (password != repeatPassword) {
+      _showMessage('Passwords do not match');
       return;
     }
     if (!_isPolicyAccepted) {
@@ -45,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
       _isSubmitting = true;
     });
 
-    final isValid = await LocalAuthDb.instance.validateLogin(
+    final registered = await LocalAuthDb.instance.register(
       account: account,
       password: password,
     );
@@ -58,8 +66,8 @@ class _LoginPageState extends State<LoginPage> {
       _isSubmitting = false;
     });
 
-    if (!isValid) {
-      _showMessage('Invalid account or password');
+    if (!registered) {
+      _showMessage('Account already exists or invalid data');
       return;
     }
 
@@ -112,14 +120,14 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Image.asset(
                   'assets/images/logo.png',
-                  width: 150,
-                  height: 150,
+                  width: 130,
+                  height: 130,
                   fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -159,12 +167,31 @@ class _LoginPageState extends State<LoginPage> {
                               TextField(
                                 controller: _passwordController,
                                 obscureText: true,
+                                textInputAction: TextInputAction.next,
                                 style: const TextStyle(color: Colors.black87),
                                 decoration: const InputDecoration(
                                   filled: true,
                                   fillColor: Color(0xFFF4F4F4),
                                   hintText: 'Please enter your password',
                                   prefixIcon: Icon(Icons.visibility_outlined),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(8),
+                                    ),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _repeatPasswordController,
+                                obscureText: true,
+                                style: const TextStyle(color: Colors.black87),
+                                decoration: const InputDecoration(
+                                  filled: true,
+                                  fillColor: Color(0xFFF4F4F4),
+                                  hintText: 'Please repeat your password',
+                                  prefixIcon: Icon(Icons.lock_outline),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.all(
                                       Radius.circular(8),
@@ -193,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                                       text: const TextSpan(
                                         style: TextStyle(
                                           color: Colors.white70,
-                                          fontSize: 18,
+                                          fontSize: 16,
                                           fontWeight: FontWeight.w300,
                                         ),
                                         children: [
@@ -217,12 +244,12 @@ class _LoginPageState extends State<LoginPage> {
                                 width: double.infinity,
                                 height: 56,
                                 child: ElevatedButton(
-                                  onPressed: _isSubmitting ? null : _login,
+                                  onPressed: _isSubmitting ? null : _register,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFF3C406),
                                     foregroundColor: Colors.white,
                                     textStyle: const TextStyle(
-                                      fontSize: 42,
+                                      fontSize: 36,
                                       fontWeight: FontWeight.w400,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -238,22 +265,10 @@ class _LoginPageState extends State<LoginPage> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      : const Text('Login'),
+                                      : const Text('Register'),
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'Forgot your password?',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontWeight: FontWeight.w400,
-                            ),
                           ),
                         ),
                       ],
