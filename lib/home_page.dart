@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'auth/local_auth_db.dart';
 import 'details_page.dart';
 import 'discover_page.dart';
 import 'home_types_page.dart';
@@ -76,6 +77,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _startHeroAutoScroll();
+    _loadDishFavorites();
   }
 
   @override
@@ -110,14 +112,33 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _onFavoriteTap(FoodDetailsArgs food) {
+  Future<void> _loadDishFavorites() async {
+    final favorites = await LocalAuthDb.instance
+        .getDishFavoritesForCurrentAccount();
+    if (!mounted) {
+      return;
+    }
     setState(() {
-      if (_favoriteDishTitles.contains(food.title)) {
+      _favoriteDishTitles
+        ..clear()
+        ..addAll(favorites);
+    });
+  }
+
+  void _onFavoriteTap(FoodDetailsArgs food) async {
+    final isCurrentlyFavorite = _favoriteDishTitles.contains(food.title);
+    setState(() {
+      if (isCurrentlyFavorite) {
         _favoriteDishTitles.remove(food.title);
       } else {
         _favoriteDishTitles.add(food.title);
       }
     });
+
+    await LocalAuthDb.instance.setDishFavoriteForCurrentAccount(
+      dishTitle: food.title,
+      isFavorite: !isCurrentlyFavorite,
+    );
   }
 
   @override

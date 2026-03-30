@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'auth/local_auth_db.dart';
+
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
 
@@ -51,19 +53,44 @@ class _DiscoverPageState extends State<DiscoverPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadChefFavorites();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  void _toggleFavorite(String chefName) {
+  Future<void> _loadChefFavorites() async {
+    final favorites = await LocalAuthDb.instance
+        .getChefFavoritesForCurrentAccount();
+    if (!mounted) {
+      return;
+    }
     setState(() {
-      if (_favoriteChefs.contains(chefName)) {
+      _favoriteChefs
+        ..clear()
+        ..addAll(favorites);
+    });
+  }
+
+  void _toggleFavorite(String chefName) async {
+    final isCurrentlyFavorite = _favoriteChefs.contains(chefName);
+    setState(() {
+      if (isCurrentlyFavorite) {
         _favoriteChefs.remove(chefName);
       } else {
         _favoriteChefs.add(chefName);
       }
     });
+
+    await LocalAuthDb.instance.setChefFavoriteForCurrentAccount(
+      chefName: chefName,
+      isFavorite: !isCurrentlyFavorite,
+    );
   }
 
   @override
@@ -252,11 +279,11 @@ class _ChefPresentationCard extends StatelessWidget {
                         shape: const CircleBorder(),
                         child: IconButton(
                           onPressed: onFavoriteTap,
-                          splashRadius: 15,
-                          padding: const EdgeInsets.all(5),
+                          splashRadius: 20,
+                          padding: const EdgeInsets.all(6),
                           constraints: const BoxConstraints.tightFor(
-                            width: 30,
-                            height: 30,
+                            width: 38,
+                            height: 38,
                           ),
                           icon: Icon(
                             isFavorite
@@ -265,7 +292,7 @@ class _ChefPresentationCard extends StatelessWidget {
                             color: isFavorite
                                 ? const Color(0xFFE24A4A)
                                 : const Color(0xFFB0B0B0),
-                            size: 17,
+                            size: 20,
                           ),
                         ),
                       ),

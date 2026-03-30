@@ -71,6 +71,8 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    await LocalAuthDb.instance.setCurrentAccount(account);
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );

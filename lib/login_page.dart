@@ -63,6 +63,8 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    await LocalAuthDb.instance.setCurrentAccount(account);
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );
