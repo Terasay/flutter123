@@ -178,6 +178,7 @@ class _ChefPresentationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dishHeight = height * 0.38;
+    final headerHeight = dishHeight + 38;
 
     return Center(
       child: SizedBox(
@@ -204,102 +205,111 @@ class _ChefPresentationCard extends StatelessWidget {
                   clipBehavior: Clip.none,
                   children: [
                     SizedBox(
+                      height: headerHeight,
                       width: double.infinity,
-                      height: dishHeight,
-                      child: Image.asset(
-                        chef.dishImagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) {
-                          return const ColoredBox(
-                            color: Color(0xFFE7E7E7),
-                            child: Center(
-                              child: Icon(
-                                Icons.restaurant_menu_rounded,
-                                size: 40,
-                                color: Color(0xFF7A7A7A),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.30),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: dishHeight - 38,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          width: 76,
-                          height: 76,
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          child: ClipOval(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: dishHeight,
                             child: Image.asset(
-                              chef.avatarImagePath,
+                              chef.dishImagePath,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) {
                                 return const ColoredBox(
-                                  color: Color(0xFFE4E4E4),
-                                  child: Icon(
-                                    Icons.person_rounded,
-                                    size: 42,
-                                    color: Color(0xFF828282),
+                                  color: Color(0xFFE7E7E7),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.restaurant_menu_rounded,
+                                      size: 40,
+                                      color: Color(0xFF7A7A7A),
+                                    ),
                                   ),
                                 );
                               },
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: dishHeight - 4,
-                      right: 12,
-                      child: Material(
-                        color: Colors.white,
-                        shape: const CircleBorder(),
-                        child: IconButton(
-                          onPressed: onFavoriteTap,
-                          splashRadius: 20,
-                          padding: const EdgeInsets.all(6),
-                          constraints: const BoxConstraints.tightFor(
-                            width: 38,
-                            height: 38,
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.30),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          icon: Icon(
-                            isFavorite
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            color: isFavorite
-                                ? const Color(0xFFE24A4A)
-                                : const Color(0xFFB0B0B0),
-                            size: 20,
+                          Positioned(
+                            top: dishHeight - 38,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: Container(
+                                width: 76,
+                                height: 76,
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    chef.avatarImagePath,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) {
+                                      return const ColoredBox(
+                                        color: Color(0xFFE4E4E4),
+                                        child: Icon(
+                                          Icons.person_rounded,
+                                          size: 42,
+                                          color: Color(0xFF828282),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
+                          Positioned(
+                            top: dishHeight - 4,
+                            right: 12,
+                            child: Material(
+                              color: Colors.white,
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                onPressed: onFavoriteTap,
+                                splashRadius: 20,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 38,
+                                  height: 38,
+                                ),
+                                icon: Icon(
+                                  isFavorite
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                  color: isFavorite
+                                      ? const Color(0xFFE24A4A)
+                                      : const Color(0xFFB0B0B0),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: dishHeight < 190 ? 30 : 34),
+                const SizedBox(height: 8),
                 Center(
                   child: Text(
                     chef.name,
