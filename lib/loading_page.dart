@@ -14,14 +14,9 @@ class LoadingPage extends StatefulWidget {
 class _LoadingPageState extends State<LoadingPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animationController;
-  late final Animation<double> _progress;
 
   static const Duration _animationDuration = Duration(milliseconds: 2600);
   static const double _logoSize = 140;
-  static const String _bgAsset = 'assets/images/image_1.jpg';
-  static const String _logoAsset = 'assets/images/logo.png';
-
-  double? _bgAspectRatio;
 
   @override
   void initState() {
@@ -31,43 +26,21 @@ class _LoadingPageState extends State<LoadingPage>
       vsync: this,
     );
 
-    _progress = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOutCubic,
-    );
-
-    _resolveBackgroundRatio();
-
+    // Запускаем анимацию после первого кадра, чтобы она гарантированно началась
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
+      if (mounted) {
+        _animationController.forward(from: 0.0);
       }
-      _animationController.forward(from: 0);
     });
   }
 
-  void _resolveBackgroundRatio() {
-    final stream = const AssetImage(_bgAsset).resolve(
-      const ImageConfiguration(),
-    );
-    late final ImageStreamListener listener;
-    listener = ImageStreamListener(
-      (info, _) {
-        final ratio = info.image.width / info.image.height;
-        if (mounted) {
-          setState(() {
-            _bgAspectRatio = ratio;
-          });
-        } else {
-          _bgAspectRatio = ratio;
-        }
-        stream.removeListener(listener);
-      },
-      onError: (_, __) {
-        stream.removeListener(listener);
-      },
-    );
-    stream.addListener(listener);
+  // СПЕЦИАЛЬНО ДЛЯ ВАС: этот метод будет перезапускать анимацию при каждом сохранении файла (Hot Reload)!
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (mounted) {
+      _animationController.forward(from: 0.0);
+    }
   }
 
   void _skip() {
@@ -84,112 +57,96 @@ class _LoadingPageState extends State<LoadingPage>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final screenWidth = size.width;
+    final screenHeight = size.height;
+
     return Scaffold(
-      body: ClipRect(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final screenWidth = constraints.maxWidth;
-            final screenHeight = constraints.maxHeight;
-            final ratio = _bgAspectRatio ?? (16 / 9);
+      backgroundColor: Colors.black,
+      body: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          // Плавная кривая движения
+          final t = Curves.easeInOutCubic.transform(_animationController.value);
 
-            var bgWidth = screenHeight * ratio;
-            var bgHeight = screenHeight;
-            if (bgWidth < screenWidth) {
-              bgWidth = screenWidth;
-              bgHeight = screenWidth / ratio;
-            }
+          // 1. Движение фона: ставим его шире экрана (х2) и двигаем влево
+          // Начало: left = 0 (видна левая часть картинки)
+          // Конец: left = -screenWidth / 2 (видна центральная часть)
+          final bgWidth = screenWidth * 2.0;
+          final currentBgLeft = -(screenWidth / 2.0) * t;
 
-            final maxShift = (bgWidth - screenWidth) / 2;
-            final logoStartX = -(screenWidth / 2 + _logoSize);
+          // 2. Движение логотипа: слева (за экраном) к центру
+          final logoStart = -_logoSize;
+          final logoEnd = screenWidth / 2 - _logoSize / 2;
+          final currentLogoLeft = logoStart + (logoEnd - logoStart) * t;
 
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                AnimatedBuilder(
-                  animation: _progress,
-                  builder: (context, child) {
-                    final t = _progress.value;
-                    final bgOffsetX = -maxShift * t;
+          // 3. Кручение логотипа: полный оборот 360 градусов по часовой
+          final currentRotation = t * 2 * math.pi;
 
-                    return Transform.translate(
-                      offset: Offset(bgOffsetX, 0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: bgWidth,
-                          height: bgHeight,
-                          child: Image.asset(
-                            _bgAsset,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // Фон
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: currentBgLeft,
+                width: bgWidth,
+                child: Image.asset(
+                  'assets/images/image_1.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerLeft,
                 ),
-                AnimatedBuilder(
-                  animation: _progress,
-                  builder: (context, child) {
-                    final t = _progress.value;
-                    final logoOffsetX = logoStartX * (1 - t);
-                    final spin = t * 2 * math.pi;
-                    final flip = math.sin(math.pi * t) * math.pi;
-
-                    return Align(
-                      alignment: Alignment.center,
-                      child: Transform.translate(
-                        offset: Offset(logoOffsetX, 0),
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.identity()
-                            ..setEntry(3, 2, 0.001)
-                            ..rotateX(flip)
-                            ..rotateZ(spin),
-                          child: Image.asset(
-                            _logoAsset,
-                            width: _logoSize,
-                            height: _logoSize,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              ),
+              // Логотип
+              Positioned(
+                top: screenHeight / 2 - _logoSize / 2,
+                left: currentLogoLeft,
+                width: _logoSize,
+                height: _logoSize,
+                child: Transform.rotate(
+                  angle: currentRotation, // Переворот логотипа в процессе движения
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                  ),
                 ),
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 20, bottom: 20),
-                      child: SizedBox(
-                        width: 62,
-                        height: 62,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            elevation: 4,
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF9C6A32),
-                            shape: const CircleBorder(),
-                            padding: EdgeInsets.zero,
-                          ),
-                          onPressed: _skip,
-                          child: const Text(
-                            'Skip',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+              ),
+              // Кнопка Skip
+              SafeArea(
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 20, bottom: 20),
+                    child: SizedBox(
+                      width: 62,
+                      height: 62,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 4,
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF9C6A32),
+                          shape: const CircleBorder(),
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: _skip,
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
+
