@@ -16,7 +16,7 @@ class _LoadingPageState extends State<LoadingPage>
   late final AnimationController _animationController;
 
   static const Duration _animationDuration = Duration(milliseconds: 2600);
-  static const double _logoSize = 140;
+  static const double _logoSize = 200;
 
   @override
   void initState() {
@@ -27,9 +27,11 @@ class _LoadingPageState extends State<LoadingPage>
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _animationController.forward(from: 0.0);
-      }
+      Future.delayed(const Duration(milliseconds: 700), () {
+        if (mounted) {
+          _animationController.forward(from: 0.0);
+        }
+      });
     });
   }
 
