@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'login_page.dart';
-import 'register_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -89,11 +88,15 @@ class _WelcomePageState extends State<WelcomePage>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0x19000000), Color(0x3D000000), Color(0x63000000)],
+                colors: [
+                  Color(0x19000000),
+                  Color(0x3D000000),
+                  Color(0x63000000),
+                ],
               ),
             ),
           ),
-          
+
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
@@ -108,7 +111,9 @@ class _WelcomePageState extends State<WelcomePage>
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.46),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.28),
+                        ),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -131,7 +136,7 @@ class _WelcomePageState extends State<WelcomePage>
                             ),
                           ),
                           const SizedBox(height: 18),
-                          
+
                           Transform.translate(
                             offset: Offset(0, _buttonSlide.value),
                             child: Opacity(
@@ -163,9 +168,9 @@ class _WelcomePageState extends State<WelcomePage>
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 8),
-                          
+
                           Opacity(
                             opacity: _centerItemsOpacity.value,
                             child: Row(
@@ -196,9 +201,9 @@ class _WelcomePageState extends State<WelcomePage>
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 8),
-                          
+
                           Transform.translate(
                             offset: Offset(0, -_buttonSlide.value),
                             child: Opacity(
@@ -210,7 +215,7 @@ class _WelcomePageState extends State<WelcomePage>
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute<void>(
-                                        builder: (_) => const RegisterPage(),
+                                        builder: (_) => const LoginPage(),
                                       ),
                                     );
                                   },

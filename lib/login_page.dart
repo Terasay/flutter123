@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'auth/local_auth_db.dart';
 import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -25,46 +24,6 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _login() async {
-    if (_isSubmitting) {
-      return;
-    }
-
-    final account = _accountController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (account.isEmpty || password.isEmpty) {
-      _showMessage('Please enter your account and password');
-      return;
-    }
-    if (!_isPolicyAccepted) {
-      _showMessage('Please agree with User Privacy Policy');
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    final isValid = await LocalAuthDb.instance.validateLogin(
-      account: account,
-      password: password,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    if (!isValid) {
-      _showMessage('Invalid account or password');
-      return;
-    }
-
-    await LocalAuthDb.instance.setCurrentAccount(account);
-
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (_) => const HomePage()),
     );
