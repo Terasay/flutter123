@@ -26,7 +26,6 @@ class _LoadingPageState extends State<LoadingPage>
       vsync: this,
     );
 
-    // Запускаем анимацию после первого кадра, чтобы она гарантированно началась
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _animationController.forward(from: 0.0);
@@ -34,7 +33,6 @@ class _LoadingPageState extends State<LoadingPage>
     });
   }
 
-  // СПЕЦИАЛЬНО ДЛЯ ВАС: этот метод будет перезапускать анимацию при каждом сохранении файла (Hot Reload)!
   @override
   void reassemble() {
     super.reassemble();
@@ -66,27 +64,20 @@ class _LoadingPageState extends State<LoadingPage>
       body: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
-          // Плавная кривая движения
           final t = Curves.easeInOutCubic.transform(_animationController.value);
 
-          // 1. Движение фона: ставим его шире экрана (х2) и двигаем влево
-          // Начало: left = 0 (видна левая часть картинки)
-          // Конец: left = -screenWidth / 2 (видна центральная часть)
-          final bgWidth = screenWidth * 2.0;
-          final currentBgLeft = -(screenWidth / 2.0) * t;
+          final bgWidth = screenWidth * 3.0;
+          final currentBgLeft = -(screenWidth / 0.52) * t;
 
-          // 2. Движение логотипа: слева (за экраном) к центру
           final logoStart = -_logoSize;
           final logoEnd = screenWidth / 2 - _logoSize / 2;
           final currentLogoLeft = logoStart + (logoEnd - logoStart) * t;
 
-          // 3. Кручение логотипа: полный оборот 360 градусов по часовой
           final currentRotation = t * 2 * math.pi;
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              // Фон
               Positioned(
                 top: 0,
                 bottom: 0,
@@ -98,21 +89,19 @@ class _LoadingPageState extends State<LoadingPage>
                   alignment: Alignment.centerLeft,
                 ),
               ),
-              // Логотип
               Positioned(
                 top: screenHeight / 2 - _logoSize / 2,
                 left: currentLogoLeft,
                 width: _logoSize,
                 height: _logoSize,
                 child: Transform.rotate(
-                  angle: currentRotation, // Переворот логотипа в процессе движения
+                  angle: currentRotation,
                   child: Image.asset(
                     'assets/images/logo.png',
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
-              // Кнопка Skip
               SafeArea(
                 child: Align(
                   alignment: Alignment.bottomRight,
