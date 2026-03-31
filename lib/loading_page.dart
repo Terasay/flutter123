@@ -61,53 +61,66 @@ class _LoadingPageState extends State<LoadingPage>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Animated background - slides from left
+                // Animated background - slides from left to right
                 AnimatedBuilder(
                   animation: _animationController,
                   builder: (context, child) {
-                    // Calculate offset: starts at -screenSize.width, ends at 0
+                    // Background moves from left edge to center
+                    // Assuming image is 2x screen width
                     final offsetX = -screenSize.width +
                         (screenSize.width * _animationController.value);
 
-                    return Transform.translate(
-                      offset: Offset(offsetX, 0),
-                      child: Image.asset(
-                        'assets/images/image_1.jpg',
-                        fit: BoxFit.cover,
-                        width: screenSize.width * 2,
-                        height: screenSize.height,
+                    return ClipRect(
+                      child: Transform.translate(
+                        offset: Offset(offsetX, 0),
+                        child: Image.asset(
+                          'assets/images/image_1.jpg',
+                          fit: BoxFit.cover,
+                          width: screenSize.width * 2,
+                          height: screenSize.height,
+                        ),
                       ),
                     );
                   },
                 ),
                 // Animated logo - slides from left and rotates 360 degrees
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    // Starting position: off-screen left (negative)
-                    // Ending position: center
-                    final startX = -screenSize.width / 2;
-                    final endX = 0.0;
-                    final logoOffsetX =
-                        startX + (endX - startX) * _animationController.value;
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        // Logo starts off-screen to the left
+                        final screenWidth = constraints.maxWidth;
+                        final logoStartX = -140.0; // Start off-screen left
+                        final logoEndX = screenWidth / 2 - 70; // End at center
 
-                    // Rotation: 0 to 360 degrees (2 * pi radians)
-                    final rotation = _animationController.value * 2 * 3.14159265359;
+                        final logoOffsetX = logoStartX +
+                            (logoEndX - logoStartX) *
+                                _animationController.value;
 
-                    return Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..translate(logoOffsetX)
-                        ..setEntry(3, 2, 0.001) // perspective
-                        ..rotateZ(rotation),
-                      child: Center(
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          width: 140,
-                          height: 140,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
+                        // Rotation: clockwise 360 degrees
+                        final rotation =
+                            _animationController.value * 2 * 3.14159265359;
+
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Positioned(
+                              left: logoOffsetX,
+                              top: screenSize.height / 2 - 70,
+                              child: Transform.rotate(
+                                angle: rotation,
+                                child: Image.asset(
+                                  'assets/images/logo.png',
+                                  width: 140,
+                                  height: 140,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
