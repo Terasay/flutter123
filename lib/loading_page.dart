@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 class LoadingPage extends StatefulWidget {
@@ -11,26 +13,61 @@ class LoadingPage extends StatefulWidget {
 
 class _LoadingPageState extends State<LoadingPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  bool _showStaticState = false;
+  late final AnimationController _animationController;
+  late final Animation<double> _progress;
+
+  static const Duration _animationDuration = Duration(milliseconds: 2600);
+  static const double _logoSize = 140;
+  static const String _bgAsset = 'assets/images/image_1.jpg';
+  static const String _logoAsset = 'assets/images/logo.png';
+
+  double? _bgAspectRatio;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: _animationDuration,
       vsync: this,
     );
 
-    _animationController.addListener(() {
-      if (_animationController.isCompleted && !_showStaticState) {
-        setState(() {
-          _showStaticState = true;
-        });
-      }
-    });
+    _progress = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
+    );
 
-    _animationController.forward();
+    _resolveBackgroundRatio();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _animationController.forward(from: 0);
+    });
+  }
+
+  void _resolveBackgroundRatio() {
+    final stream = const AssetImage(_bgAsset).resolve(
+      const ImageConfiguration(),
+    );
+    late final ImageStreamListener listener;
+    listener = ImageStreamListener(
+      (info, _) {
+        final ratio = info.image.width / info.image.height;
+        if (mounted) {
+          setState(() {
+            _bgAspectRatio = ratio;
+          });
+        } else {
+          _bgAspectRatio = ratio;
+        }
+        stream.removeListener(listener);
+      },
+      onError: (_, __) {
+        stream.removeListener(listener);
+      },
+    );
+    stream.addListener(listener);
   }
 
   void _skip() {
@@ -47,84 +84,78 @@ class _LoadingPageState extends State<LoadingPage>
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Animation state - background slides from left with rotating logo
-          AnimatedOpacity(
-            opacity: _showStaticState ? 0 : 1,
-            duration: const Duration(milliseconds: 650),
-            curve: Curves.easeInOut,
-            child: Stack(
+      body: ClipRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final screenHeight = constraints.maxHeight;
+            final ratio = _bgAspectRatio ?? (16 / 9);
+
+            var bgWidth = screenHeight * ratio;
+            var bgHeight = screenHeight;
+            if (bgWidth < screenWidth) {
+              bgWidth = screenWidth;
+              bgHeight = screenWidth / ratio;
+            }
+
+            final maxShift = (bgWidth - screenWidth) / 2;
+            final logoStartX = -(screenWidth / 2 + _logoSize);
+
+            return Stack(
               fit: StackFit.expand,
               children: [
-                // Animated background - slides from left to right
                 AnimatedBuilder(
-                  animation: _animationController,
+                  animation: _progress,
                   builder: (context, child) {
-                    // Background moves from left edge to center
-                    // Assuming image is 2x screen width
-                    final offsetX = -screenSize.width +
-                        (screenSize.width * _animationController.value);
+                    final t = _progress.value;
+                    final bgOffsetX = -maxShift * t;
 
-                    return ClipRect(
-                      child: Transform.translate(
-                        offset: Offset(offsetX, 0),
-                        child: Image.asset(
-                          'assets/images/image_1.jpg',
-                          fit: BoxFit.cover,
-                          width: screenSize.width * 2,
-                          height: screenSize.height,
+                    return Transform.translate(
+                      offset: Offset(bgOffsetX, 0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: bgWidth,
+                          height: bgHeight,
+                          child: Image.asset(
+                            _bgAsset,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     );
                   },
                 ),
-                // Animated logo - slides from left and rotates 360 degrees
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        // Logo starts off-screen to the left
-                        final screenWidth = constraints.maxWidth;
-                        final logoStartX = -140.0; // Start off-screen left
-                        final logoEndX = screenWidth / 2 - 70; // End at center
+                AnimatedBuilder(
+                  animation: _progress,
+                  builder: (context, child) {
+                    final t = _progress.value;
+                    final logoOffsetX = logoStartX * (1 - t);
+                    final spin = t * 2 * math.pi;
+                    final flip = math.sin(math.pi * t) * math.pi;
 
-                        final logoOffsetX = logoStartX +
-                            (logoEndX - logoStartX) *
-                                _animationController.value;
-
-                        // Rotation: clockwise 360 degrees
-                        final rotation =
-                            _animationController.value * 2 * 3.14159265359;
-
-                        return Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Positioned(
-                              left: logoOffsetX,
-                              top: screenSize.height / 2 - 70,
-                              child: Transform.rotate(
-                                angle: rotation,
-                                child: Image.asset(
-                                  'assets/images/logo.png',
-                                  width: 140,
-                                  height: 140,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
+                    return Align(
+                      alignment: Alignment.center,
+                      child: Transform.translate(
+                        offset: Offset(logoOffsetX, 0),
+                        child: Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateX(flip)
+                            ..rotateZ(spin),
+                          child: Image.asset(
+                            _logoAsset,
+                            width: _logoSize,
+                            height: _logoSize,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
-                // Skip button visible during animation
                 SafeArea(
                   child: Align(
                     alignment: Alignment.bottomRight,
@@ -155,61 +186,9 @@ class _LoadingPageState extends State<LoadingPage>
                   ),
                 ),
               ],
-            ),
-          ),
-          // Static state - shown after animation completes
-          AnimatedOpacity(
-            opacity: _showStaticState ? 1 : 0,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
-            child: IgnorePointer(
-              ignoring: !_showStaticState,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset('assets/images/image_1.jpg', fit: BoxFit.cover),
-                  Center(
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 140,
-                      height: 140,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  SafeArea(
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 20, bottom: 20),
-                        child: SizedBox(
-                          width: 62,
-                          height: 62,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              elevation: 4,
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFF9C6A32),
-                              shape: const CircleBorder(),
-                              padding: EdgeInsets.zero,
-                            ),
-                            onPressed: _skip,
-                            child: const Text(
-                              'Skip',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
